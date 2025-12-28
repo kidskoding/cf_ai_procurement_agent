@@ -1,0 +1,26 @@
+# Bootstrap marker
+.bootstrap-complete
+
+# Node
+node_modules/
+dist/
+
+package-lock.json
+bun.lock
+
+# Remix
+/.cache
+/build
+
+# Cloudflare
+.wrangler
+.dev.vars
+wrangler.jsonc
+worker-configuration.d.ts
+
+# Playwright
+/test-results
+/playwright-report
+
+# Remix stacks
+/package-lock.json
