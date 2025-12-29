@@ -20,7 +20,7 @@ export class ChatAgent extends Agent<Env, ChatState> {
       }
       
       // Force update model if it's invalid using proper setState method
-      if (this.state?.model === '@cf/meta/llama-3.3-70b-instruct-turbo' || !this.state?.model) {
+      if (this.state?.model?.startsWith('@cf/') || !this.state?.model) {
         this.setState({ ...this.state, model: this.initialState.model });
       }
       
@@ -87,16 +87,30 @@ export class ChatAgent extends Agent<Env, ChatState> {
       }, { status: 500 });
     }
   }
-  private async handleChatMessage(body: { message: string; model?: string; stream?: boolean }): Promise<Response> {
-    const { message, model, stream } = body;
+  private async handleChatMessage(body: { message: string; model?: string; stream?: boolean; isSystemNotification?: boolean }): Promise<Response> {
+    const { message, model, stream, isSystemNotification } = body;
     if (!message?.trim()) return Response.json({ success: false, error: API_RESPONSES.MISSING_MESSAGE }, { status: 400 });
+    
+    // Handle system notifications differently
+    if (isSystemNotification) {
+      const notificationMessage = createMessage('assistant', message.trim());
+      notificationMessage.isSystemNotification = true;
+      const updatedMessages = [...this.state.messages, notificationMessage];
+      this.setState({ ...this.state, messages: updatedMessages });
+      return Response.json({ success: true, data: this.state });
+    }
+    
     const activeModel = model || this.state.model;
     if (!this.chatHandler) {
-      this.chatHandler = new ChatHandler(this.env, activeModel);
+      this.chatHandler = new ChatHandler(this.env, activeModel, this.state.sessionId);
+    } else {
+      // Ensure ChatHandler always has the current session_id
+      this.chatHandler.setSessionId(this.state.sessionId);
     }
     if (model && model !== this.state.model) {
       this.setState({ ...this.state, model });
-      // Model updated - ChatHandler will use the new model on next recreation
+      this.chatHandler = new ChatHandler(this.env, model, this.state.sessionId);
+      // Model updated - create new ChatHandler with new model and current session_id
     }
     const userMessage = createMessage('user', message.trim());
     const updatedMessages = [...this.state.messages, userMessage];

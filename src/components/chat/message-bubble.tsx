@@ -174,6 +174,7 @@ function formatTextContent(content: string): string {
 }
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
+  const isSystemNotification = message.isSystemNotification;
   const [md, setMd] = useState<{ReactMarkdown: any} | null>(null);
   const [markdownError, setMarkdownError] = useState(false);
   
@@ -196,6 +197,47 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   if (message.role === 'tool' || (message.role === 'assistant' && !message.content?.trim() && message.toolCalls?.length)) {
     return null;
   }
+  
+  // Special rendering for system notifications
+  if (isSystemNotification) {
+    return (
+      <div className="flex gap-2 items-start w-full group animate-in slide-in-from-left-2 duration-300">
+        <Avatar className="size-6 border-2 border-orange-200 bg-orange-100 dark:bg-orange-900 dark:border-orange-800">
+          <AvatarFallback className="text-orange-600 dark:text-orange-300">
+            <Info className="size-3" />
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 space-y-1 min-w-0">
+          <div className={cn(
+            "max-w-[75%] p-3 border rounded-lg shadow-sm",
+            "bg-orange-50 text-orange-900 border-orange-200 rounded-tl-none",
+            "dark:bg-orange-950/70 dark:text-orange-100 dark:border-orange-800"
+          )}>
+            <div className={cn(
+              md && !markdownError ?
+                "prose prose-sm dark:prose-invert max-w-none break-words prose-headings:text-inherit prose-a:underline prose-a:font-medium" :
+                "whitespace-pre-wrap break-words text-sm leading-relaxed",
+              "text-orange-900 dark:text-orange-100 prose-a:text-orange-700 dark:prose-a:text-orange-300"
+            )}>
+              {md && !markdownError ? (
+                <SafeMarkdown 
+                  content={message.content ?? ''} 
+                  ReactMarkdown={md.ReactMarkdown}
+                  onError={() => setMarkdownError(true)}
+                />
+              ) : (
+                <div dangerouslySetInnerHTML={{ __html: formatTextContent(message.content ?? '') }} />
+              )}
+            </div>
+            <div className="text-[10px] mt-2 opacity-60 font-medium text-left">
+              {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • System Notification
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   const supplierResult = message.toolCalls?.find(tc => tc.name === 'find_suppliers')?.result as any;
   const suppliers = supplierResult?.suppliers;
   return (

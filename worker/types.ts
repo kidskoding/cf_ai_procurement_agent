@@ -30,6 +30,7 @@ export interface Message {
   id: string;
   toolCalls?: ToolCall[];
   tool_call_id?: string;
+  isSystemNotification?: boolean;
 }
 export interface ToolCall {
   id: string;

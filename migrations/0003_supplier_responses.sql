@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS SupplierResponses (
   id TEXT PRIMARY KEY,
   supplier_name TEXT NOT NULL,
-  supplier_email TEXT NOT NULL,
+  supplier_email TEXT NOT NULL UNIQUE,
   price REAL,
   response_text TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP

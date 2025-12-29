@@ -1,0 +1,56 @@
+PRAGMA defer_foreign_keys=TRUE;
+CREATE TABLE IF NOT EXISTS "Parts" (id INTEGER PRIMARY KEY AUTOINCREMENT, part_number TEXT UNIQUE NOT NULL, part_description TEXT NOT NULL);
+INSERT INTO "Parts" VALUES(1,'RES-220K','2.2k Ohm 1/4W Resistor');
+INSERT INTO "Parts" VALUES(2,'CPU-i7-13700K','Intel Core i7 Processor');
+INSERT INTO "Parts" VALUES(3,'CAP-100UF','100uF Capacitor');
+INSERT INTO "Parts" VALUES(7,'GPU-RTX4090','NVIDIA RTX 4090 Graphics Card');
+INSERT INTO "Parts" VALUES(8,'RAM-DDR5-32G','32GB DDR5 6000MHz Memory Kit');
+INSERT INTO "Parts" VALUES(9,'SSD-2TB-NVME','2TB PCIe Gen4 NVMe SSD');
+INSERT INTO "Parts" VALUES(10,'MCU-ESP32','ESP32 WiFi+BT Microcontroller');
+INSERT INTO "Parts" VALUES(11,'IC-LM358','Dual Op-Amp LM358');
+INSERT INTO "Parts" VALUES(12,'LED-RGB-5MM','5mm RGB LED Common Cathode');
+INSERT INTO "Parts" VALUES(13,'MOS-IRF540','N-Channel MOSFET 100V 33A');
+INSERT INTO "Parts" VALUES(14,'DIO-1N4148','Signal Diode 1N4148');
+INSERT INTO "Parts" VALUES(15,'CRY-16MHZ','16MHz Crystal Oscillator');
+INSERT INTO "Parts" VALUES(16,'CON-USB-C','USB-C Connector SMT');
+INSERT INTO "Parts" VALUES(17,'SEN-DHT22','DHT22 Temp/Humidity Sensor');
+INSERT INTO "Parts" VALUES(18,'REL-5V','5V Relay Module 10A');
+INSERT INTO "Parts" VALUES(19,'BAT-LI-18650','18650 Lithium-Ion Battery 2600mAh');
+INSERT INTO "Parts" VALUES(20,'FAN-120PWM','120mm PWM Case Fan');
+INSERT INTO "Parts" VALUES(21,'SWITCH-TACT','Tactile Push Button Switch');
+INSERT INTO "Parts" VALUES(22,'POT-10K','10k Linear Potentiometer');
+INSERT INTO "Parts" VALUES(23,'LCD-16x2','16x2 LCD Display');
+INSERT INTO "Parts" VALUES(24,'SERVO-SG90','SG90 Micro Servo 9g');
+INSERT INTO "Parts" VALUES(25,'BUZZ-PIEZO','Piezo Buzzer Active');
+INSERT INTO "Parts" VALUES(26,'IND-100UH','100uH Power Inductor');
+INSERT INTO "Parts" VALUES(27,'TRIO-BC547','NPN Transistor BC547');
+INSERT INTO "Parts" VALUES(28,'LCD-OLED-SSD1306','0.96 SSD1306 OLED Display');
+INSERT INTO "Parts" VALUES(29,'MPU6050','6-Axis Gyro/Accel IMU');
+INSERT INTO "Parts" VALUES(30,'RTC-DS3231','DS3231 RTC Module');
+INSERT INTO "Parts" VALUES(31,'STEP-M28BYJ','5V 4-Phase Stepper Motor');
+INSERT INTO "Parts" VALUES(32,'DRIVER-ULN2003','ULN2003 Stepper Driver');
+INSERT INTO "Parts" VALUES(33,'CAM-OV2640','OV2640 Camera Module');
+INSERT INTO "Parts" VALUES(34,'RFID-MFRC522','MFRC522 RFID Reader');
+INSERT INTO "Parts" VALUES(35,'WLK-001','Wireless Keyboard');
+INSERT INTO "Parts" VALUES(36,'WLM-001','Wireless Mouse');
+CREATE TABLE PurchaseOrders (order_number TEXT PRIMARY KEY, order_date DATE, supplier_name TEXT, supplier_email TEXT, part_number TEXT NOT NULL, price DECIMAL(10,2), FOREIGN KEY (part_number) REFERENCES Parts(part_number));
+INSERT INTO "PurchaseOrders" VALUES('PO-001','2025-12-20','Global Dynamics','sales@global.com','RES-220K',0.15);
+INSERT INTO "PurchaseOrders" VALUES('PO-002','2025-12-22','Precision Ltd','dreamstan05@gmail.com','CPU-i7-13700K',299.99);
+INSERT INTO "PurchaseOrders" VALUES('PO-003','2025-12-24','Apex Solutions','orders@apex.com','CAP-100UF',0.89);
+INSERT INTO "PurchaseOrders" VALUES('PO-004','2025-12-19','Vertex Parts','buy@vertex.com','RES-220K',0.12);
+INSERT INTO "PurchaseOrders" VALUES('PO-005','2025-12-23','Legacy Co','supply@legacy.com','CAP-100UF',0.95);
+INSERT INTO "PurchaseOrders" VALUES('PO-006','2025-12-21','TechHub','kidskodingclub@gmail.com','CPU-i7-13700K',315.5);
+INSERT INTO "PurchaseOrders" VALUES('PO-007','2025-12-23','Logitech','dreamstan05@gmail.com','WLK-001',50);
+INSERT INTO "PurchaseOrders" VALUES('PO-008','2025-12-23','DELL','kidskodingclub@gmail.com','WLK-001',55);
+CREATE TABLE SupplierResponses (
+  id TEXT PRIMARY KEY,
+  supplier_name TEXT NOT NULL,
+  supplier_email TEXT NOT NULL,
+  price REAL,
+  response_text TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+DELETE FROM sqlite_sequence;
+INSERT INTO "sqlite_sequence" VALUES('Parts',36);
+CREATE INDEX idx_supplier_responses_email ON SupplierResponses(supplier_email);
+CREATE INDEX idx_supplier_responses_date ON SupplierResponses(created_at);

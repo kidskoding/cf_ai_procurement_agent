@@ -4,7 +4,7 @@
 -- Create SupplierResponses table if it doesn't exist
 CREATE TABLE IF NOT EXISTS SupplierResponses (
     id TEXT PRIMARY KEY,
-    supplier_email TEXT NOT NULL,
+    supplier_email TEXT NOT NULL UNIQUE,
     supplier_name TEXT NOT NULL,
     price REAL,
     response_text TEXT,

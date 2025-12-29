@@ -76,6 +76,51 @@ export function ChatView() {
       if (isMounted.current) setIsInitializing(false);
     }
   }, []);
+
+  // Auto-polling for new messages (dynamic notifications)
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout;
+    
+    const startPolling = () => {
+      pollInterval = setInterval(async () => {
+        if (isMounted.current && !isLoading && !streamingText) {
+          try {
+            const res = await chatService.getMessages();
+            if (res.success && res.data && Array.isArray(res.data.messages)) {
+              const newMessageCount = res.data.messages.length;
+              const currentMessageCount = messages.length;
+              
+              if (newMessageCount > currentMessageCount) {
+                console.log(`📧 Detected ${newMessageCount - currentMessageCount} new messages`);
+                setMessages(res.data.messages);
+                
+                // Check if the new message is a system notification
+                const latestMessage = res.data.messages[res.data.messages.length - 1];
+                if (latestMessage?.isSystemNotification) {
+                  toast.success('📧 New supplier response received!', {
+                    duration: 5000
+                  });
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Polling error:', err);
+          }
+        }
+      }, 2000); // Poll every 2 seconds
+    };
+
+    // Start polling when component is active
+    if (!isInitializing && messages.length > 0) {
+      startPolling();
+    }
+
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, [isInitializing, isLoading, streamingText, messages.length]);
   useEffect(() => {
     const init = async () => {
       try {

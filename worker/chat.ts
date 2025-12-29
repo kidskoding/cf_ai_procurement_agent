@@ -6,15 +6,16 @@ export class ChatHandler {
   private client: OpenAI | null = null;
   private model: string;
   private env: Env;
+  private sessionId: string;
   private initError: string | null = null;
   private isPreviewMode: boolean = false;
   private readonly DEFAULT_MODEL = 'gpt-4o-mini';
   
-  constructor(env: Env, model: string) {
+  constructor(env: Env, model: string, sessionId?: string) {
     this.env = env;
     this.model = model || this.DEFAULT_MODEL;
+    this.sessionId = sessionId || 'unknown-session';
     
-    // Initialize OpenAI SDK for local testing
     try {
       const apiKey = env.OPENAI_API_KEY || process.env.OPENAI_API_KEY;
       if (!apiKey) {
@@ -29,6 +30,14 @@ export class ChatHandler {
     }
   }
 
+  setSessionId(sessionId: string): void {
+    this.sessionId = sessionId || 'unknown-session';
+  }
+
+  updateModel(model: string): void {
+    this.model = model || this.DEFAULT_MODEL;
+  }
+
   async processMessage(
     message: string,
     conversationHistory: Message[],
@@ -38,7 +47,6 @@ export class ChatHandler {
     toolCalls?: ToolCall[];
     isPreview?: boolean;
   }> {
-    // Check if OpenAI client is available
     if (!this.client) {
       const errorMsg = `AI not configured: ${this.initError || 'OpenAI SDK not initialized'}`;
       console.error(errorMsg);
@@ -47,7 +55,6 @@ export class ChatHandler {
     
     const messages = this.buildConversationMessages(message, conversationHistory);
     
-    // Build tool definitions for OpenAI function calling
     const tools = await getToolDefinitions();
     const openaiTools = tools.map(tool => ({
       type: 'function' as const,
@@ -55,7 +62,6 @@ export class ChatHandler {
     }));
     
     try {
-      // Call OpenAI with function calling enabled for agentic behavior
       console.log('Calling OpenAI with proper function calling, model:', this.model);
       const response = await this.client.chat.completions.create({
         model: this.model,
@@ -71,25 +77,29 @@ export class ChatHandler {
       
       console.log('OpenAI response received, stop_reason:', response.choices[0]?.finish_reason);
       
-      // Handle the response
       const choice = response.choices[0];
       if (!choice) {
         return { content: 'No response from AI' };
       }
       
-      // Check if AI called any tools
       if (choice.message.tool_calls && choice.message.tool_calls.length > 0) {
         console.log('✓ AI called tools autonomously:', choice.message.tool_calls.length);
         
         const toolCalls: ToolCall[] = [];
         let finalContent = choice.message.content || '';
         
-        // Execute each tool call
         for (const toolCall of choice.message.tool_calls) {
           try {
             const args = typeof toolCall.function.arguments === 'string'
               ? JSON.parse(toolCall.function.arguments)
               : toolCall.function.arguments;
+            
+            // Inject session_id for procurement tools
+            if (toolCall.function.name === 'send_bulk_procurement_request' || 
+                toolCall.function.name === 'start_procurement_request' ||
+                toolCall.function.name === 'send_supplier_email') {
+              args.session_id = this.sessionId;
+            }
             
             console.log(`✓ Executing tool: ${toolCall.function.name}`, args);
             const result = await executeTool(toolCall.function.name, args, this.env);
@@ -101,7 +111,6 @@ export class ChatHandler {
               result
             });
             
-            // Add tool result to conversation for follow-up
             messages.push({
               role: 'assistant',
               content: finalContent || ' ',
@@ -124,7 +133,6 @@ export class ChatHandler {
           }
         }
         
-        // Get follow-up response with tool results
         console.log('Getting follow-up response with tool results...');
         const followUp = await this.client.chat.completions.create({
           model: this.model,
@@ -140,7 +148,6 @@ export class ChatHandler {
         return { content: finalContent, toolCalls };
       }
       
-      // No tools called, just return the response
       console.log('No tools called, returning direct response');
       return { content: choice.message.content || 'No response' };
     } catch (error) {
@@ -153,7 +160,6 @@ export class ChatHandler {
 
   private buildConversationMessages(userMessage: string, history: Message[]) {
     const formattedHistory = history.slice(-10).map(m => {
-      // For prompt-based tool calling, we don't use OpenAI tool_calls format
       if (m.role === 'assistant' && m.toolCalls && m.toolCalls.length > 0) {
         const toolCallsText = m.toolCalls.map(tc => 
           `<tool_call>{"name": "${tc.name}", "arguments": ${JSON.stringify(tc.arguments)}}</tool_call>`
@@ -165,7 +171,6 @@ export class ChatHandler {
         };
       }
       if (m.role === 'tool') {
-        // Convert tool results to text format
         return { 
           role: 'user' as const, 
           content: `Tool Result: ${m.content}`
@@ -181,25 +186,40 @@ export class ChatHandler {
       CORE MANDATE: Be proactive and investigative. Autonomously execute the full procurement workflow.
       
       AVAILABLE TOOLS:
-      - find_suppliers: Search ERP for suppliers of a specific part
-      - send_supplier_email: Send outreach emails to suppliers
+      - find_suppliers: Search ERP for suppliers of a specific part (tries multiple search strategies automatically)
+      - search_parts_catalog: Browse available parts and their codes in the database
+      - send_supplier_email: Send outreach emails to suppliers (for single supplier)
+      - send_bulk_procurement_request: Contact multiple suppliers at once with automated tracking and hourly updates
       - record_supplier_response: Record a supplier's response with pricing information
       - get_supplier_responses: Get all recorded supplier responses and analyze to find best price
       - place_order: Create a purchase order with a supplier
       
       PROCUREMENT WORKFLOW (YOU EXECUTE AUTONOMOUSLY):
-      1. When user asks to find suppliers: CALL find_suppliers
-      2. Send outreach emails: CALL send_supplier_email to contact all suppliers
-      3. When user provides supplier responses: CALL record_supplier_response for EACH response
-      4. After recording responses: CALL get_supplier_responses to analyze and find best price
-      5. Present analysis showing best option: "Best price: Supplier X at $Y per unit"
+      1. When user asks to find suppliers: 
+         - FIRST: CALL find_suppliers with their description - this returns a list of suppliers
+         - If no results, CALL search_parts_catalog to explore available parts and suggest alternatives
+      2. IMMEDIATELY after finding suppliers: 
+         - If 2 or more suppliers: CALL send_bulk_procurement_request with suppliers array for automated tracking
+         - If 1 supplier: CALL send_supplier_email for that single supplier
+      3. When responses arrive: The system automatically notifies you in this chat with updates
+      4. After all responses received or when user asks: CALL get_supplier_responses to analyze pricing
+      5. Present analysis: "Best price: Supplier X at $Y per unit"
       6. If user approves: CALL place_order to confirm the purchase
+      
+      CRITICAL: Use send_bulk_procurement_request to enable automatic hourly status updates until all suppliers respond.
+      
+      SEARCH STRATEGY:
+      - The find_suppliers tool automatically tries multiple search approaches (exact match, individual words, abbreviations)
+      - If find_suppliers returns no results, use search_parts_catalog to discover what parts ARE available
+      - Help users understand how parts are coded in the system (e.g., WLK-001 for wireless keyboards)
+      - Be adaptive and suggest alternative search terms based on catalog exploration
       
       CRITICAL: When user asks about supplier responses, pricing updates, or mentions emails were received, 
       IMMEDIATELY call get_supplier_responses to check for new responses in the system.
       
       BEHAVIOR RULES:
       - Always use tools to gather and process data before responding
+      - Be investigative: if direct search fails, explore the catalog to understand available inventory
       - For supplier queries, send emails to ALL relevant suppliers found
       - When user provides response data, record EACH response individually with record_supplier_response
       - ALWAYS follow up by calling get_supplier_responses to analyze all responses
@@ -207,7 +227,7 @@ export class ChatHandler {
       - Be proactive: if you have recorded responses, analyze them without waiting to be asked
       - When user mentions receiving emails or asks about responses, check get_supplier_responses first
       
-      For procurement requests, ALWAYS use find_suppliers first to locate suppliers.`
+      For procurement requests, be adaptive and thorough in your search approach.`
     };
 
     return [systemMessage, ...formattedHistory, { role: 'user' as const, content: userMessage }];
@@ -266,11 +286,19 @@ You can use multiple tools in sequence. Always use tools to gather data before m
       throw new Error('Terminal stream synchronization failed.');
     }
 
-    // Check if response contains tool calls
     const toolCallMatch = fullContent.match(/<tool_call>\s*({.*?})\s*<\/tool_call>/s);
     if (toolCallMatch) {
       try {
         const toolCall = JSON.parse(toolCallMatch[1]);
+        
+        // Inject session_id for procurement tools
+        if (toolCall.name === 'send_bulk_procurement_request' || 
+            toolCall.name === 'start_procurement_request' ||
+            toolCall.name === 'send_supplier_email') {
+          toolCall.arguments = toolCall.arguments || {};
+          toolCall.arguments.session_id = this.sessionId;
+        }
+        
         onChunk("\n\n---\n**ACCESSING SECURE ERP RECORDS...**\n\n");
         
         const result = await executeTool(toolCall.name, toolCall.arguments, this.env);
@@ -371,10 +399,8 @@ Result: ${JSON.stringify(tr.result)}
   ): Promise<{content: string; toolCalls?: ToolCall[]}> {
     console.log('Analyzing response for tool calls. Content:', content);
     
-    // Extract JSON from any format - handle all malformed cases
     let jsonString = '';
     
-    // Method 1: Try standard patterns first
     const standardPatterns = [
       /<tool_call>\s*({.*?})\s*<\/tool_call>/gs,
       /<tool_call>({.*?})<\/tool_call>/gs
@@ -389,7 +415,6 @@ Result: ${JSON.stringify(tr.result)}
       }
     }
     
-    // Method 2: Handle malformed formats if standard didn't work
     if (!jsonString) {
       const malformedPatterns = [
         /<ool_call>\s*({.*?})\s*<\/tool_call>/gs,
@@ -407,7 +432,6 @@ Result: ${JSON.stringify(tr.result)}
       }
     }
     
-    // Method 3: Direct JSON search if XML parsing fails
     if (!jsonString) {
       const directJsonMatch = content.match(/{[^}]*"name"\s*:\s*"find_suppliers"[^}]*}/g);
       if (directJsonMatch) {
@@ -420,26 +444,22 @@ Result: ${JSON.stringify(tr.result)}
       try {
         console.log('Raw extracted JSON:', JSON.stringify(jsonString));
         
-        // Advanced JSON cleaning for AI-generated content
         let cleanJson = jsonString.trim();
         
-        // Remove any text before the first {
         const startBrace = cleanJson.indexOf('{');
         if (startBrace > 0) {
           cleanJson = cleanJson.substring(startBrace);
         }
         
-        // Remove any text after the last }
         const lastBrace = cleanJson.lastIndexOf('}');
         if (lastBrace !== -1) {
           cleanJson = cleanJson.substring(0, lastBrace + 1);
         }
         
-        // Fix common AI mistakes
         cleanJson = cleanJson
-          .replace(/,\s*}/, '}')  // Remove trailing commas
-          .replace(/'/g, '"')     // Replace single quotes with double quotes
-          .replace(/([{,]\s*)(\w+):/g, '$1"$2":')  // Quote unquoted property names
+          .replace(/,\s*}/, '}')
+          .replace(/'/g, '"')    
+          .replace(/([{,]\s*)(\w+):/g, '$1"$2":')
           .trim();
         
         console.log('Cleaned JSON after fixes:', cleanJson);
@@ -461,7 +481,6 @@ Result: ${JSON.stringify(tr.result)}
           result
         };
         
-        // Generate follow-up response with tool results
         const followUpResult = await this.env.AI.run(this.model, {
           messages: [
             {
@@ -485,7 +504,6 @@ Result: ${JSON.stringify(tr.result)}
       }
     }
     
-    // No tool calls detected, check if this looks like it should have been a database query
     const shouldUseDatabase = /supplier|i7|procurement|part|component|gpu|memory|cpu/i.test(message);
     if (shouldUseDatabase) {
       console.log('Query seems to need database access, but no tool call detected. Content:', content);

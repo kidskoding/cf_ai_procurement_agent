@@ -17,6 +17,7 @@ export interface Message {
   timestamp: number;
   id: string;
   toolCalls?: ToolCall[];
+  isSystemNotification?: boolean;
 }
 export interface ToolCall {
   id: string;
