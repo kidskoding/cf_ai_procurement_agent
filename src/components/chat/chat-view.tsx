@@ -18,7 +18,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
-import { chatService, MODELS } from '@/lib/chat';
+import { chatService } from '@/lib/chat';
 import { MessageBubble } from '@/components/chat/message-bubble';
 import type { Message } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -31,7 +31,7 @@ export function ChatView() {
   const [dbStatus, setDbStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [streamingText, setStreamingText] = useState('');
   const [isPreview, setIsPreview] = useState(false);
-  const [currentModel, setCurrentModel] = useState(MODELS[0].id);
+  const [currentModel, setCurrentModel] = useState('gpt-4o-mini');
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMounted = useRef(true);
   useEffect(() => {
@@ -62,8 +62,8 @@ export function ChatView() {
           toast.error(res.error || 'Failed to load messages');
         } else if (res.data && Array.isArray(res.data.messages)) {
           setMessages(res.data.messages);
-          setCurrentModel(res.data.model || MODELS[0].id);
-          const hasSandboxMsg = res.data.messages.some(m => m.content?.includes('SupplyScout ready') || m.content?.includes('Preview sandbox'));
+          setCurrentModel(res.data.model || 'gpt-4o-mini');
+          const hasSandboxMsg = res.data.messages.some(m => m.content?.includes('Procurement AI Agent ready') || m.content?.includes('Preview sandbox'));
           if (hasSandboxMsg) setIsPreview(true);
         }
       }
@@ -177,20 +177,6 @@ export function ChatView() {
       toast.error("Purge failed");
     }
   }, []);
-  const handleModelChange = useCallback(async (modelId: string) => {
-    try {
-      setIsLoading(true);
-      const res = await chatService.updateModel(modelId);
-      if (res.success && isMounted.current) {
-        setCurrentModel(modelId);
-        toast.success(`Active model updated to ${MODELS.find(m => m.id === modelId)?.name}`);
-      }
-    } catch (error) {
-      toast.error("Failed to update model");
-    } finally {
-      if (isMounted.current) setIsLoading(false);
-    }
-  }, []);
   const handleFactoryReset = useCallback(async () => {
     const confirm = window.confirm("CAUTION: This will delete all history permanently. Proceed?");
     if (!confirm) return;
@@ -267,7 +253,6 @@ export function ChatView() {
       }
     }
   }, [input, isLoading, loadMessages, currentModel]);
-  const activeModelName = MODELS.find(m => m.id === currentModel)?.name || 'Llama 3.3 Turbo';
   return (
     <div className="flex flex-col h-full w-full border bg-background relative shadow-2xl rounded-2xl overflow-hidden min-h-0 ring-1 ring-border/50">
       <header className="px-6 py-4 border-b flex items-center justify-between bg-card/90 backdrop-blur-xl sticky top-0 z-20">
@@ -280,7 +265,7 @@ export function ChatView() {
           </div>
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-base font-bold tracking-tight text-foreground">SupplyScout</h1>
+              <h1 className="text-base font-bold tracking-tight text-foreground">Procurement AI</h1>
               {isPreview ? (
                 <Badge variant="destructive" className="text-[9px] h-4.5 px-1.5 font-bold uppercase tracking-wider bg-orange-500 text-white border-orange-600">
                   Sandbox
@@ -309,7 +294,7 @@ export function ChatView() {
               </Tooltip>
             </div>
             <p className="text-[10px] text-muted-foreground uppercase tracking-[0.1em] font-bold flex items-center gap-1 mt-0.5">
-              <ShieldCheck className="w-3 h-3" /> {activeModelName}
+              <ShieldCheck className="w-3 h-3" /> GPT-4o-mini
             </p>
           </div>
         </div>
@@ -326,23 +311,6 @@ export function ChatView() {
             <DropdownMenuContent align="end" className="w-64 rounded-xl">
               <DropdownMenuLabel>System Controls</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="cursor-pointer">
-                  <Database className="w-4 h-4 mr-2" />
-                  Model Selection
-                </DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuSubContent className="w-56">
-                    <DropdownMenuRadioGroup value={currentModel} onValueChange={handleModelChange}>
-                      {MODELS.map(m => (
-                        <DropdownMenuRadioItem key={m.id} value={m.id} className="text-xs cursor-pointer">
-                          {m.name}
-                        </DropdownMenuRadioItem>
-                      ))}
-                    </DropdownMenuRadioGroup>
-                  </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-              </DropdownMenuSub>
               <DropdownMenuItem onClick={handleClearChat} className="text-foreground cursor-pointer">
                 <Trash2 className="w-4 h-4 mr-2" />
                 Clear Session Logs

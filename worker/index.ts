@@ -50,6 +50,10 @@ const safeLoadUserRoutes = async (app: Hono<{ Bindings: Env }>) => {
 
 const app = new Hono<{ Bindings: Env }>();
 
+// Load routes immediately - once at startup, not per request
+userRoutes(app);
+coreRoutes(app);
+
 /** DO NOT TOUCH THE CODE BELOW THIS LINE */
 // Middleware
 app.use("*", logger());
@@ -215,22 +219,6 @@ async function checkSingleProcurementRequest(env: Env, request: any) {
 
 export default {
   async fetch(request, env, ctx) {
-    const pathname = new URL(request.url).pathname;
-
-    if (pathname.startsWith("/api/") && pathname !== "/api/health" && pathname !== "/api/client-errors") {
-      await safeLoadUserRoutes(app);
-      if (userRoutesLoadError) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: "Worker routes failed to load",
-            detail: userRoutesLoadError,
-          }),
-          { status: 500, headers: { "content-type": "application/json" } },
-        );
-      }
-    }
-
     return app.fetch(request, env, ctx);
   },
 

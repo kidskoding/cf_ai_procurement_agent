@@ -181,7 +181,7 @@ export class ChatHandler {
     
     const systemMessage = {
       role: 'system' as const,
-      content: `You are SupplyScout, an AUTONOMOUS AI Procurement Agent. 
+      content: `You are the Procurement AI Agent, an AUTONOMOUS system for sourcing and purchasing. 
       
       CORE MANDATE: Be proactive and investigative. Autonomously execute the full procurement workflow.
       
@@ -366,7 +366,7 @@ Result: ${JSON.stringify(tr.result)}
     const messages: any[] = [
       {
         role: 'system',
-        content: `You are SupplyScout, an AUTONOMOUS AI Procurement Agent. 
+        content: `You are the Procurement AI Agent, an AUTONOMOUS system for sourcing and purchasing. 
         
         The user asked: "${userMessage}"
         
@@ -485,7 +485,7 @@ Result: ${JSON.stringify(tr.result)}
           messages: [
             {
               role: 'system',
-              content: `You are SupplyScout. The user asked: "${message}"\n\nDatabase Results: ${JSON.stringify(result, null, 2)}\n\nProvide a clear, professional response about these suppliers.`
+              content: `You are the Procurement AI Agent. The user asked: "${message}"\n\nDatabase Results: ${JSON.stringify(result, null, 2)}\n\nProvide a clear, professional response about these suppliers.`
             },
             { role: 'user', content: message }
           ],

@@ -8,7 +8,7 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-const PROJECT_NAME = "supply-scout-u1ikqe9nmudmnbtgeilw7";
+const PROJECT_NAME = "procurement-ai-agent";
 const BOOTSTRAP_MARKER = '.bootstrap-complete';
 
 // Check if already bootstrapped

@@ -15,7 +15,7 @@ export function HomePage() {
       <footer className="w-full border-t border-border/40 bg-background/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-[10px] text-muted-foreground/60 select-none uppercase tracking-widest font-semibold dark:text-slate-400">
-            SupplyScout v1.0.0 Terminal
+            Procurement AI Agent v1.0.0 Terminal
           </p>
           <p className="text-[10px] text-center text-muted-foreground/40 max-w-md leading-relaxed dark:text-slate-500">
             <strong>Notice:</strong> AI request limits apply. Data retrieved from internal ERP bindings. Subject to procurement compliance policies.

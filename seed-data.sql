@@ -1,0 +1,47 @@
+-- Seed data for local development
+-- Parts data
+INSERT INTO Parts (id, part_number, part_description) VALUES 
+(1,'RES-220K','2.2k Ohm 1/4W Resistor'),
+(2,'CPU-i7-13700K','Intel Core i7 Processor'),
+(3,'CAP-100UF','100uF Capacitor'),
+(7,'GPU-RTX4090','NVIDIA RTX 4090 Graphics Card'),
+(8,'RAM-DDR5-32G','32GB DDR5 6000MHz Memory Kit'),
+(9,'SSD-2TB-NVME','2TB PCIe Gen4 NVMe SSD'),
+(10,'MCU-ESP32','ESP32 WiFi+BT Microcontroller'),
+(11,'IC-LM358','Dual Op-Amp LM358'),
+(12,'LED-RGB-5MM','5mm RGB LED Common Cathode'),
+(13,'MOS-IRF540','N-Channel MOSFET 100V 33A'),
+(14,'DIO-1N4148','Signal Diode 1N4148'),
+(15,'CRY-16MHZ','16MHz Crystal Oscillator'),
+(16,'CON-USB-C','USB-C Connector SMT'),
+(17,'SEN-DHT22','DHT22 Temp/Humidity Sensor'),
+(18,'REL-5V','5V Relay Module 10A'),
+(19,'BAT-LI-18650','18650 Lithium-Ion Battery 2600mAh'),
+(20,'FAN-120PWM','120mm PWM Case Fan'),
+(21,'SWITCH-TACT','Tactile Push Button Switch'),
+(22,'POT-10K','10k Linear Potentiometer'),
+(23,'LCD-16x2','16x2 LCD Display'),
+(24,'SERVO-SG90','SG90 Micro Servo 9g'),
+(25,'BUZZ-PIEZO','Piezo Buzzer Active'),
+(26,'IND-100UH','100uH Power Inductor'),
+(27,'TRIO-BC547','NPN Transistor BC547'),
+(28,'LCD-OLED-SSD1306','0.96 SSD1306 OLED Display'),
+(29,'MPU6050','6-Axis Gyro/Accel IMU'),
+(30,'RTC-DS3231','DS3231 RTC Module'),
+(31,'STEP-M28BYJ','5V 4-Phase Stepper Motor'),
+(32,'DRIVER-ULN2003','ULN2003 Stepper Driver'),
+(33,'CAM-OV2640','OV2640 Camera Module'),
+(34,'RFID-MFRC522','MFRC522 RFID Reader'),
+(35,'WLK-001','Wireless Keyboard'),
+(36,'WLM-001','Wireless Mouse');
+
+-- PurchaseOrders data
+INSERT INTO PurchaseOrders (order_number, order_date, supplier_name, supplier_email, part_number, price) VALUES
+('PO-001', '2025-12-20', 'Global Dynamics', 'sales@global.com', 'RES-220K', 0.15),
+('PO-002', '2025-12-22', 'Precision Ltd', 'dreamstan05@gmail.com', 'CPU-i7-13700K', 299.99),
+('PO-003', '2025-12-24', 'Apex Solutions', 'orders@apex.com', 'CAP-100UF', 0.89),
+('PO-004', '2025-12-19', 'Vertex Parts', 'buy@vertex.com', 'RES-220K', 0.12),
+('PO-005', '2025-12-23', 'Legacy Co', 'supply@legacy.com', 'CAP-100UF', 0.95),
+('PO-006', '2025-12-21', 'TechHub', 'kidskodingclub@gmail.com', 'CPU-i7-13700K', 315.5),
+('PO-007', '2025-12-23', 'Logitech', 'dreamstan05@gmail.com', 'WLK-001', 50),
+('PO-008', '2025-12-23', 'DELL', 'kidskodingclub@gmail.com', 'WLK-001', 55);

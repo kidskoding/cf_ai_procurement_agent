@@ -234,7 +234,11 @@ export async function executeTool(name: string, args: Record<string, unknown>, e
         }
       }
       case 'search_parts_catalog': {
-        const searchTerm = (args.search_term as string || '').toLowerCase().trim();
+        const rawSearchTerm = args.search_term;
+        console.log('search_parts_catalog args:', JSON.stringify(args));
+        console.log('rawSearchTerm:', rawSearchTerm, 'type:', typeof rawSearchTerm);
+        
+        const searchTerm = (rawSearchTerm ? String(rawSearchTerm).toLowerCase().trim() : '');
         
         try {
           console.log('Starting catalog search with term:', searchTerm || '(all parts)');
@@ -251,6 +255,7 @@ export async function executeTool(name: string, args: Record<string, unknown>, e
               ORDER BY part_description
             `;
             queryParams = [`%${searchTerm}%`];
+            console.log('Query params:', queryParams);
           } else {
             // Show all parts
             sql = `

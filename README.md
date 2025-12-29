@@ -31,9 +31,17 @@ An autonomous AI-powered procurement agent that any employee of an enterprise ca
 
 5. [API Endpoints](#api-endpoints)
 
-6. [End to End Example Walkthrough](#end-to-end-example-walkthrough)
+6. [End to End Business Example Walkthrough](#end-to-end-business-example-walkthrough)
 
 7. [Installation Instructions - How to Run](#installation-instructions---how-to-run)
+
+    7.1. [Prerequisites](#prerequisites)
+
+    7.2. [Development Setup](#development-setup)
+
+    7.3. [Building and Deploying for Production](#building-and-deploying-for-production)
+
+    7.4. [Database Schema](#database-schema)
 
 ## The Business Problem
 
@@ -234,21 +242,46 @@ This architecture enables autonomous, real-time procurement with instant visibil
 - **POST** `/api/chat/:sessionId/chat` - Send message to agent
 - **GET** `/api/chat/:sessionId/messages` - Get chat history
 - **DELETE** `/api/chat/:sessionId/clear` - Clear messages
-- **POST** `/api/chat/:sessionId/model` - Change AI model
 
 ### Webhook Routes
 - **POST** `/api/webhooks/emails` - Receive supplier email responses (Resend webhook)
-
-### System Routes
-- **GET** `/api/system/status` - Check database connection status
-- **POST** `/api/migrations/fix-supplier-responses` - Fix SupplierResponses table UNIQUE constraint
 
 ### Session Routes
 - **GET** `/api/sessions` - List all sessions
 - **POST** `/api/sessions/:sessionId/title` - Update session title
 - **DELETE** `/api/sessions` - Clear all sessions
 
-## End to End Example Walkthrough
+## End to End Business Example Walkthrough
+
+1. The employee describes what they need (i.e. "I am looking to buy a wireless keyboard") ![Employee describes what they need](./demo_assets/image.png)
+
+2. The employee, suppose its name is John Doe, then asks the Procurement AI Agent to show them an email that it will send to both suppliers (mimicing Logitech and DELL for the purpose of this demonstration) verifying the quantity in stock along with the confirmed price they are selling it at
+
+![Step 2](./demo_assets/image-1.png)
+
+![Step 2 again](./demo_assets/image-2.png)
+
+3. If the employee is satisfied with the emails, they can request the Procurement AI Agent to send the emails to both suppliers
+
+![Step 3](./demo_assets/image-3.png)
+
+Both suppliers (mimicing Logitech and DELL for this demonstration) then receive an email in their inbox from the employee
+
+![Logitech email](./demo_assets/image-4.png)
+
+![DELL email](./demo_assets/image-5.png)
+
+Suppliers can then respond to these emails confirming the price and quantity of the wireless keyboard that they are selling
+
+![DELL response](./demo_assets/image-7.png)
+
+![Logitech response](./demo_assets/image-8.png)
+
+Once the suppliers have responded, the agent will update in chat with the responses from the suppliers, giving the best price the user can buy a wireless keyboard
+
+![Chat updating response](./demo_assets/image-6.png)
+
+The user can then choose whether or not they would like to place an order!
 
 ## Installation Instructions - How to Run
 

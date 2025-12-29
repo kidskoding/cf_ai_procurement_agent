@@ -10,12 +10,6 @@ export interface ChatResponse {
   isPreview?: boolean;
 }
 const STORAGE_KEY = 'supply_scout_session_id';
-export const MODELS = [
-  { id: '@cf/meta/llama-3.3-70b-instruct-turbo', name: 'Llama 3.3 70B Turbo (Latest)' },
-  { id: '@cf/meta/llama-3.1-70b-instruct', name: 'Llama 3.1 70B (High Reasoning)' },
-  { id: '@cf/meta/llama-3.1-8b-instruct', name: 'Llama 3.1 8B (Fast)' },
-  { id: '@cf/meta/llama-3.2-3b-instruct', name: 'Llama 3.2 3B (Fastest)' },
-];
 class ChatService {
   private sessionId: string;
   private baseUrl: string;
@@ -38,14 +32,14 @@ class ChatService {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message,
-          model: model || '@cf/meta/llama-3.3-70b-instruct-turbo',
+          model: model || 'gpt-4o-mini',
           stream: !!onChunk
         }),
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const detail = (errorData.detail || errorData.error || `HTTP ${response.status}`).toString();
-        const isPreview = detail.includes('SupplyScout ready') || detail.includes('Preview sandbox');
+        const isPreview = detail.includes('Procurement AI Agent ready') || detail.includes('Preview sandbox');
         return {
           success: false,
           error: detail,
@@ -74,13 +68,13 @@ class ChatService {
         }
         return {
           success: true,
-          isPreview: fullText.includes('SupplyScout ready') || fullText.includes('Preview sandbox')
+          isPreview: fullText.includes('Procurement AI Agent ready') || fullText.includes('Preview sandbox')
         };
       }
       const result = await response.json();
       return {
         ...result,
-        isPreview: result.isPreview || result.data?.messages?.some((m: any) => m.content?.includes('SupplyScout ready') || m.content?.includes('Preview sandbox'))
+        isPreview: result.isPreview || result.data?.messages?.some((m: any) => m.content?.includes('Procurement AI Agent ready') || m.content?.includes('Preview sandbox'))
       };
     } catch (error: any) {
       return { success: false, error: error?.message || 'Failed to send message' };
